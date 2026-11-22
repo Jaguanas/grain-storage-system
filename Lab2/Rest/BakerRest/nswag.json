@@ -1,0 +1,17 @@
+{
+  "runtime": "Net100",
+  "documentGenerator": {
+    "fromDocument": {
+      "url": "http://localhost:5001/swagger/v1/swagger.json",
+      "output": null
+    }
+  },
+  "codeGenerators": {
+    "openApiToCSharpClient": {
+      "classname": "StorageRestClient",
+      "namespace": "GeneratedRest",
+      "output": "StorageRestClient.cs",
+      "generateSyncMethods": true
+    }
+  }
+}

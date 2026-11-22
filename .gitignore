@@ -6,3 +6,6 @@ links.txt
 .terraform/
 *.tfstate
 *.tfstate.*
+# Lecturer's RabbitMQ example (reference only, not my code)
+rabbitmq/
+CLAUDE.md

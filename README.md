@@ -1,170 +1,72 @@
-# A simpleRPC program
+# Grain storage (Grūdų saugykla), topic 49
 
-A distributed .NET application demonstrating RPC communication between a
-Storage server and two clients: Baker and Farmer.
+One system, built several times with different networking technologies across
+the T120B180 labs.
 
-## Architecture
+**The system:** a Storage server keeps a grain balance and cycles through the seasons
+(Winter → Spring → Summer → Autumn, every 15 s). **Bakers** take grain out
+periodically (their period is 2× longer in winter and spring). If there is not enough grain,
+the missed profit grows; otherwise the earned profit grows. **Farmers** work only
+in summer and autumn and deposit grain. If the storage is full they wait, and if winter
+arrives while they wait, their portion is lost.
 
-The solution contains:
-- `Storage` - RPC server that stores grain and manages seasons.
-- `Baker` - client that consumes grain.
-- `Farmer` - client that deposits grain.
-- `StorageContract` - shared RPC interfaces and data models.
+## Folder layout
 
-The applications communicate through SimpleRpc over HTTP.
+```
+simplerpc/
+├── simplerpc.sln          Opens everything; solution folders match the dirs below
+│
+├── Shared/                Used by every lab, so it lives in one place
+│   ├── StorageContract/   IStorageService + data types (BakerDesc, FarmerDesc, Season, ...)
+│   └── StorageCore/       StorageLogic: the business rules, thread-safe, season timer
+│
+├── Lab1/                  Lab 1: SimpleRPC
+│   ├── Storage/           SimpleRPC server (port 5000) → StorageCore
+│   ├── Baker/             SimpleRPC client (uses StorageContract proxy)
+│   ├── Farmer/            SimpleRPC client (uses StorageContract proxy)
+│   └── Deployment/        Docker Compose, Kubernetes, Terraform for the Lab 1 images
+│
+└── Lab2/                  Lab 2: web services (same system, two more transports)
+    ├── Rest/
+    │   ├── StorageRest/   ASP.NET Web API + Swagger/OpenAPI (port 5001) → StorageCore
+    │   ├── BakerRest/     client generated from the OpenAPI doc with NSwag
+    │   └── FarmerRest/    client generated from the OpenAPI doc with NSwag
+    └── Grpc/
+        ├── StorageGrpc/   gRPC server (port 5002) → StorageCore; owns Protos/storage.proto
+        ├── BakerGrpc/     client generated from storage.proto
+        └── FarmerGrpc/    client generated from storage.proto
+```
 
-## Requirements
+How the pieces connect:
 
-- .NET 10 SDK
-- Docker Desktop
-- Docker Compose
+```
+                 Shared/StorageContract  (types + IStorageService)
+                            ▲
+                 Shared/StorageCore      (StorageLogic, the rules)
+          ┌─────────────────┼──────────────────┐
+   Lab1/Storage      Lab2/Rest/StorageRest   Lab2/Grpc/StorageGrpc
+   SimpleRPC :5000   REST :5001              gRPC :5002
+       ▲                    ▲                     ▲
+   Baker, Farmer     BakerRest, FarmerRest   BakerGrpc, FarmerGrpc
+```
 
-## Run Locally
+The rules exist only once, in `StorageCore`. Each lab's server is a thin adapter that
+exposes the same logic over its own transport. That is what keeps "the same system as
+in Lab 1" true.
 
-Build the solution:
+## Build everything
+
 ```bash
 dotnet build simplerpc.sln
 ```
 
-Start the server
-```bash
-dotnet run --project Storage.csproj
-```
+Run instructions are in each lab's README:
+- [Lab1/README.md](Lab1/README.md): SimpleRPC, Docker, Kubernetes, Terraform
+- [Lab2/README.md](Lab2/README.md): REST and gRPC
 
-In separate terminals, start the clients:
-```bash
-dotnet run --project Baker.csproj
-dotnet run --project Farmer.csproj
-```
+## Requirements
 
-The default RPC endpoint is:
-```bash
-http://127.0.0.1:5000/simplerpc
-```
-
-## Run with Docker Compose
-
-Start all services:
-```bash
-docker compose up --build -d
-```
-
-View logs:
-```bash
-docker compose logs -f
-```
-
-Stop the services:
-```bash
-docker compose down
-```
-
-Inside the Docker network, clients connect to Storage using:
-```bash
-http://storage:5000/simplerpc
-```
-
-## Run with Kubernetes
-
-Create local cluster:
-```bash
-kind create cluster --name simplerpc
-```
-
-Create the namespace:
-```bash
-kubectl apply -f namespace.yaml
-```
-
-Apply the storage server and service:
-```bash
-kubectl apply -f storage.yaml
-```
-
-Apply the clients:
-```bash
-kubectl apply -f baker.yaml
-kubectl apply -f farmer.yaml
-```
-
-View logs:
-```bash
-kubectl logs -f deployment/storage -n simplerpc
-kubectl logs -f deployment/baker -n simplerpc
-kubectl logs -f deployment/farmer -n simplerpc
-```
-
-Remove the application namespace:
-```bash
-kubectl delete namespace simplerpc
-```
-
-Delete the local kind cluster:
-```bash
-kind delete cluster --name simplerpc
-```
-
-## Run with Terraform
-
-If kind cluster doesn't exists, create it:
-```bash
-kind create cluster --name simplerpc
-```
-
-Open the Terraform folder:
-```bash
-cd .\terraform
-```
-
-Initialize Terraform
-```bash
-terraform init
-```
-
-Format and validate
-```bash
-terraform fmt
-terraform validate
-```
-
-Preview changes:
-```bash
-terraform plan
-```
-
-Apply configuration:
-```bash
-terraform apply
-```
-
-Check Kubernetes resources:
-```bash
-kubectl get all -n simplerpc-tf
-```
-
-View application logs:
-```bash
-kubectl logs -f deployment/storage -n simplerpc-tf
-kubectl logs -f deployment/baker -n simplerpc-tf
-kubectl logs -f deployment/farmer -n simplerpc-tf
-```
-
-To stop the Terraform-managed application:
-```bash
-terraform destroy
-```
-
-## Project Status
-
-Currently supported:
-- Native .NET execution
-- Individual Docker images
-- Docker network communication
-- Docker Compose orchestration
-- Publish images to Docker Hub
-- Deploy to Kubernetes
-- Manage Kubernetes resources with Terraform
-
-## License
+- .NET 10 SDK
+- Docker Desktop, kind, kubectl, Terraform (only for Lab 1 deployment)
 
 This project is for educational purposes.

@@ -1,6 +1,9 @@
 .git
 .vs
 .vscode
+# Lab1 images only need Shared/ and Lab1/ project sources
+Lab2/
+Lab1/Deployment/
 **/bin
 **/obj
 *.user

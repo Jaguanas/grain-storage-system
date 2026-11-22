@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package Services;
+option csharp_namespace = "StorageGrpc.Services";
+
+import "google/protobuf/empty.proto";
+
+enum Season {
+  WINTER = 0;
+  SPRING = 1;
+  SUMMER = 2;
+  AUTUMN = 3;
+}
+
+enum GrainOperationStatus {
+  SUCCESS = 0;
+  NOT_ENOUGH_GRAIN = 1;
+  STORAGE_FULL = 2;
+  SEASON_CHANGED = 3;
+  INVALID_AMOUNT = 4;
+  INACTIVE_SEASON = 5;
+}
+
+message BakerDesc {
+  int32 id = 1;
+  string name_surname = 2;
+}
+
+message FarmerDesc {
+  int32 id = 1;
+  string name_surname = 2;
+}
+
+message ConsumeRequest {
+  BakerDesc baker = 1;
+  int32 amount = 2;
+}
+
+message ProduceRequest {
+  FarmerDesc farmer = 1;
+  int32 amount = 2;
+}
+
+message RegistrationResponse {
+  int32 id = 1;
+}
+
+message SeasonResponse {
+  Season season = 1;
+}
+
+message GrainOperationResponse {
+  GrainOperationStatus status = 1;
+  int32 amount = 2;
+  string reason = 3;
+}
+
+service Storage {
+  rpc RegisterBaker(BakerDesc) returns (RegistrationResponse);
+  rpc RegisterFarmer(FarmerDesc) returns (RegistrationResponse);
+  rpc GetSeason(google.protobuf.Empty) returns (SeasonResponse);
+  rpc Consume(ConsumeRequest) returns (GrainOperationResponse);
+  rpc Produce(ProduceRequest) returns (GrainOperationResponse);
+}
