@@ -26,15 +26,21 @@ simplerpc/
 │   ├── Farmer/            SimpleRPC client (uses StorageContract proxy)
 │   └── Deployment/        Docker Compose, Kubernetes, Terraform for the Lab 1 images
 │
-└── Lab2/                  Lab 2: web services (same system, two more transports)
-    ├── Rest/
-    │   ├── StorageRest/   ASP.NET Web API + Swagger/OpenAPI (port 5001) → StorageCore
-    │   ├── BakerRest/     client generated from the OpenAPI doc with NSwag
-    │   └── FarmerRest/    client generated from the OpenAPI doc with NSwag
-    └── Grpc/
-        ├── StorageGrpc/   gRPC server (port 5002) → StorageCore; owns Protos/storage.proto
-        ├── BakerGrpc/     client generated from storage.proto
-        └── FarmerGrpc/    client generated from storage.proto
+├── Lab2/                  Lab 2: web services (same system, two more transports)
+│   ├── Rest/
+│   │   ├── StorageRest/   ASP.NET Web API + Swagger/OpenAPI (port 5001) → StorageCore
+│   │   ├── BakerRest/     client generated from the OpenAPI doc with NSwag
+│   │   └── FarmerRest/    client generated from the OpenAPI doc with NSwag
+│   └── Grpc/
+│       ├── StorageGrpc/   gRPC server (port 5002) → StorageCore; owns Protos/storage.proto
+│       ├── BakerGrpc/     client generated from storage.proto
+│       └── FarmerGrpc/    client generated from storage.proto
+│
+└── Lab3/                  Lab 3: RabbitMQ message broker (request/reply over queues)
+    ├── StorageRabbitTransport/   RPCMessage envelope, queue names, hand-written StorageClient
+    ├── StorageRabbit/            server: consumes the request queue → StorageCore
+    ├── BakerRabbit/              client loop using StorageClient
+    └── FarmerRabbit/             client loop using StorageClient
 ```
 
 How the pieces connect:
@@ -43,16 +49,17 @@ How the pieces connect:
                  Shared/StorageContract  (types + IStorageService)
                             ▲
                  Shared/StorageCore      (StorageLogic, the rules)
-          ┌─────────────────┼──────────────────┐
-   Lab1/Storage      Lab2/Rest/StorageRest   Lab2/Grpc/StorageGrpc
-   SimpleRPC :5000   REST :5001              gRPC :5002
-       ▲                    ▲                     ▲
-   Baker, Farmer     BakerRest, FarmerRest   BakerGrpc, FarmerGrpc
+          ┌─────────────────┼──────────────────┬───────────────────────────┐
+   Lab1/Storage      Lab2/Rest/StorageRest   Lab2/Grpc/StorageGrpc   Lab3/StorageRabbit
+   SimpleRPC :5000   REST :5001              gRPC :5002              RabbitMQ broker :5672
+       ▲                    ▲                     ▲                        ▲
+   Baker, Farmer     BakerRest, FarmerRest   BakerGrpc, FarmerGrpc   BakerRabbit, FarmerRabbit
 ```
 
 The rules exist only once, in `StorageCore`. Each lab's server is a thin adapter that
 exposes the same logic over its own transport. That is what keeps "the same system as
-in Lab 1" true.
+in Lab 1" true. In Lab 3 the clients and the server never connect to each other: they all
+connect to the RabbitMQ broker and exchange request/reply messages through it.
 
 ## Build everything
 
@@ -63,10 +70,12 @@ dotnet build simplerpc.sln
 Run instructions are in each lab's README:
 - [Lab1/README.md](Lab1/README.md): SimpleRPC, Docker, Kubernetes, Terraform
 - [Lab2/README.md](Lab2/README.md): REST and gRPC
+- [Lab3/README.md](Lab3/README.md): RabbitMQ
 
 ## Requirements
 
 - .NET 10 SDK
-- Docker Desktop, kind, kubectl, Terraform (only for Lab 1 deployment)
+- Docker Desktop (Lab 1 deployment, and the RabbitMQ broker for Lab 3)
+- kind, kubectl, Terraform (only for Lab 1 deployment)
 
 This project is for educational purposes.

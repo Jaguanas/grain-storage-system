@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<!-- Class library: everything about talking to Storage over RabbitMQ (envelope, names, client proxy). -->
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="NLog" Version="6.2.2" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+		<PackageReference Include="RabbitMQ.Client" Version="7.2.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- StorageClient implements IStorageService and sends the contract's types. -->
+		<ProjectReference Include="..\..\Shared\StorageContract\StorageContract.csproj" />
+	</ItemGroup>
+</Project>
