@@ -1,7 +1,6 @@
-# Grain storage (Grūdų saugykla), topic 49
+# Grain storage
 
-One system, built several times with different networking technologies across
-the T120B180 labs.
+> A distributed systems course project at Kaunas University of Technology: one storage service built over four different transports (SimpleRPC, REST, gRPC and RabbitMQ), all sharing one core logic layer. The services are containerised with Docker and deployed to Kubernetes with both YAML manifests and Terraform.
 
 **The system:** a Storage server keeps a grain balance and cycles through the seasons
 (Winter → Spring → Summer → Autumn, every 15 s). **Bakers** take grain out
